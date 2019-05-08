@@ -2,12 +2,12 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 import { botSecretToken } from './Hidden';
-import { playCommand } from './src/Voice';
+import { playCommand, skipCommand } from './src/Voice';
 
 
 client.login(botSecretToken).then(() => console.log("Successfully logged in."));
 client.on('ready', () => {
-
+    console.log('TomBot is now ready.')
 });
 
 
@@ -17,7 +17,7 @@ client.on('message', async message => {
     if (!message.guild || message.author.id === client.user.id)
         return;
 
-    if (message.content.startsWith("!"))
+    if (message.content.startsWith("~"))
         processCommand(message);
 });
 
@@ -36,6 +36,8 @@ function processCommand(receivedMsg) {
         case ('play'):
             playCommand(receivedArgs, receivedMsg).then(() => console.log("Play command executed."));
             break;
+        case('skip'):
+            skipCommand(receivedMsg).then(() => console.log("Skip command executed."));
     }
 
 }
