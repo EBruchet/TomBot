@@ -1,70 +1,72 @@
 const ytdl = require('ytdl-core');
 const {YoutubeDataAPI} = require("youtube-v3-api");
+const api = new YoutubeDataAPI(youtubeApiKey);
 import {youtubeApiKey} from '../Hidden';
 
-const api = new YoutubeDataAPI(youtubeApiKey);
 const streamOptions = {seek: 0, volume: 1};
 const YOUTUBE_PREFIX = 'https://www.youtube.com/watch?v=';
+let globalMsg;
 
 let channelJukebox =
     {
-        voiceChannelID: '',
         active: false,
         songQueue: [],
     };
 
-
 async function playCommand(args, message) {
+    let returned = '';
+
     if (!message.member.voiceChannelID) {
         message.reply('join a voice channel before requesting a song.');
-        return;
+        return 'PLAY FAIL - request from outside voice channel.';
+    } else if (args.length === 0){
+        message.reply('mus at least give me a song to play skippy');
+        return 'PLAY FAIL - no song provided.';
     }
 
+    globalMsg = message;
     message.member.voiceChannel.join().then(() => {
         channelJukebox.channelID = message.member.voiceChannelID;
-        channelJukebox.speaking = true; // TODO: Is this necessary?
-        console.log('Connected to ' + message.member.voiceChannel.name);
+        channelJukebox.speaking = true;
     });
-
-    // TODO: Check the user has actually passed additional arguments
 
     api.searchAll(args.join(' ')).then((returnedList) => {
-        return YOUTUBE_PREFIX + returnedList.items[0].id.videoId;
-    }).then((url) => {
-        let connection = message.member.voiceChannel.connection;
+        let firstResult = returnedList.items[0];
+        return {
+            title: returnedList.items[0].snippet.title,
+            url: YOUTUBE_PREFIX + firstResult.id.videoId,
+        };
+    }).then((videoInfo) => {
         if(!channelJukebox.active){
             channelJukebox.active = true;
-            channelJukebox.songQueue.push(url);
-            playExecute(channelJukebox.songQueue[0], connection);
+            addToQueue(videoInfo).then(() => {
+                playExecute(channelJukebox.songQueue[0], message.member.voiceChannel.connection);
+                message.channel.send('Now playing: ' + videoInfo.title + '.');
+            });
         } else{
-            channelJukebox.songQueue.push(url);
+            message.channel.send('Added ' + videoInfo.title + ' to the queue.');
+            channelJukebox.songQueue.push(videoInfo);
         }
-    });
+    }).finally(() =>{return returned});
 
-
+    return returned;
 }
 
-
-function playExecute(url, connection){
+function playExecute(videoInfo, connection){
     // If shifting the array returns undefined, we disconnect the bot as we have reached the end of the queue
-    if(!url){
+    if(!videoInfo){
         connection.disconnect();
         channelJukebox.active = false;
         return;
     }
 
-    console.log("Play Execute Queue: ", channelJukebox.songQueue);
-    console.log("Play Execute Connection: ", connection);
-
-    const stream = ytdl(url, {
+    const stream = ytdl(videoInfo.url, {
         quality: 'lowestaudio', filter: 'audioonly'
     });
-    connection.playStream(stream, streamOptions).on('end', (reason) => {
-        console.log("Reason: ", reason);
+    connection.playStream(stream, streamOptions).on('end', () => {
         channelJukebox.songQueue.shift();
         playExecute(channelJukebox.songQueue[0], connection);
     });
-
 }
 
 async function skipCommand(message) {
@@ -73,9 +75,19 @@ async function skipCommand(message) {
         return;
     }
 
+    if(channelJukebox.songQueue.length === 0 || !channelJukebox.active){
+        message.reply('to skip, it must have a song in the queue you fish.');
+        return 'SKIP FAILED - No songs existing in the queue.';
+    }
+
     message.member.voiceChannel.join().then((connection) => {
         connection.dispatcher.end('Skip command has been used!');
+        return 'SKIP SUCCESS - Song skipped.'
     });
+}
+
+async function addToQueue(videoInfo){
+    return channelJukebox.songQueue.push(videoInfo);
 }
 
 export {playCommand, skipCommand};

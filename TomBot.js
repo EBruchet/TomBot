@@ -1,8 +1,8 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
-import { botSecretToken } from './Hidden';
-import { playCommand, skipCommand } from './src/Voice';
+import {botSecretToken} from './Hidden';
+import {playCommand, skipCommand} from './src/Voice';
 
 
 client.login(botSecretToken).then(() => console.log("Successfully logged in."));
@@ -17,6 +17,7 @@ client.on('message', async message => {
     if (!message.guild || message.author.id === client.user.id)
         return;
 
+    // ignore messages not beginning with the '~' symbol
     if (message.content.startsWith("~"))
         processCommand(message);
 });
@@ -34,10 +35,12 @@ function processCommand(receivedMsg) {
         case('join'):
             break;
         case ('play'):
-            playCommand(receivedArgs, receivedMsg).then(() => console.log("Play command executed."));
+            playCommand(receivedArgs, receivedMsg)
+                .then(() => {});
             break;
         case('skip'):
-            skipCommand(receivedMsg).then(() => console.log("Skip command executed."));
+            skipCommand(receivedMsg)
+                .then(() => {});
     }
 
 }
