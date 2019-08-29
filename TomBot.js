@@ -2,12 +2,14 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 import {botSecretToken} from './Hidden';
+import databaseConnection from './src/Database';
 import {playCommand, skipCommand} from './src/Voice';
 
 
 client.login(botSecretToken).then(() => console.log("Successfully logged in."));
 client.on('ready', () => {
     console.log('TomBot is now ready.')
+    databaseConnection();
 });
 
 
