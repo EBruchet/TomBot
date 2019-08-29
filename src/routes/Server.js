@@ -23,7 +23,6 @@ serverRouter.get('/ByServerID', (req, res) => {
         })
 });
 
-
 // @route GET /api/servers/All
 // @desc Request all servers
 // @access Public
@@ -61,7 +60,6 @@ serverRouter.post('/', (req, res) => {
 
 });
 
-
 // @route PUT /api/servers
 // @desc Update Server object
 // @access Public
@@ -78,13 +76,11 @@ serverRouter.put('/', (req, res) => {
         .then(server => {
             if (server)
                 return res.status(201).json(prediction);
-            return res.status(404).json({ error: 'PUTServer: Discord ServerID does not exist.' });
+            return res.status(404).json({ error: 'PUTServer: Discord Server does not exist.' });
         })
         .catch(err => {
             return res.status(500).json({ error: err });
         })
 })
-
-
 
 export default serverRouter;
