@@ -37,7 +37,6 @@ playlistRouter.post('/', (req, res) => {
             if (playlist)
                 return res.status(400).json({ error: 'POSTPlaylist: A playlist with this name already exists' });
 
-
             /** 
              * TODO: Add server-side validation for the playlist names
              * Will not tolerate racist, homophobic slurs, overly long names
@@ -49,9 +48,13 @@ playlistRouter.post('/', (req, res) => {
             });
 
 
-            newPlaylist.save();
-
-            return res.status(201).json()
+            newPlaylist.save()
+                .then(createdPlaylist => {
+                    return res.status(201).json({ createdPlaylist });
+                })
+                .catch(err => {
+                    return res.status(500).json({ error: err });
+                });
         })
         .catch(err => {
             return res.status(500).json({ error: err });
